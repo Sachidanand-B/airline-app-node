@@ -18,14 +18,29 @@ exports.getAirLineData = (req, res, next) => {
   });
 };
 
+exports.postAirlineData = (req, res, next) => {
+  airlineRef
+    .orderByChild("flightnumber")
+    .equalTo(req.body.flightId)
+    .once("value", function (snapshot) {
+      console.log(snapshot.val());
+      if (snapshot.exists()) {
+        snapshot.ref
+          .child(Object.keys(snapshot.val())[0])
+          .update(req.body.data);
+      }
+      res.send({ message: "success" });
+      next();
+    });
+};
+
 exports.getPassengersData = (req, res, next) => {
-  console.log("req", req);
+  console.log("req.params----------------->", req.params);
   passengerRef
     .orderByChild("flightId")
     .equalTo(req.params.id)
     .once("value", function (snapshot) {
       if (snapshot.exists()) {
-        console.log('>>>>', snapshot.val());
         res.send(snapshot.val());
         next();
       } else {
@@ -59,21 +74,6 @@ exports.postUserData = (req, res, next) => {
 };
 
 exports.postCheckedInData = (req, res, next) => {
-  // passengerRef
-  //   // .orderByChild("flightId")
-  //   // .equalTo("1A")
-  //   .once("value", function (snapshot) {
-  //     if (snapshot.exists()) {
-  //             console.log(snapshot.val());
-
-  //       // snapshot.ref.child(Object.keys(snapshot.val())[0]).update({
-  //       //   flightId_passport:
-  //       //     Object.values(snapshot.val())[0].flightId +
-  //       //     "_" +
-  //       //     Object.values(snapshot.val())[0].passport,
-  //       // });
-  //     }
-  //   });
   passengerRef
     .orderByChild("flightId_passport")
     .equalTo(req.body.flightId + "_" + req.body.passport)
@@ -84,7 +84,28 @@ exports.postCheckedInData = (req, res, next) => {
           .child(Object.keys(snapshot.val())[0])
           .update({ checkedIn: req.body.checkedIn });
       }
-      res.send({message: "success"});
+      res.send({ message: "success" });
+      next();
+    });
+};
+
+exports.postPassengerData = (req, res, next) => {
+  passengerRef
+    .orderByChild("flightId_passport")
+    .equalTo(req.body.flightId + "_" + req.body.passport)
+    .once("value", function (snapshot) {
+      console.log(snapshot.val());
+      if (req.body.data.seatNumber) {
+        req.body.data.seatNumber = req.body.data.seatNumber.toUpperCase();
+      }
+      if (snapshot.exists()) {
+        snapshot.ref
+          .child(Object.keys(snapshot.val())[0])
+          .update(req.body.data);
+      } else {
+        passengerRef.push(req.body.data);
+      }
+      res.send({ message: "success" });
       next();
     });
 };
